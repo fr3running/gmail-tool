@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FR3RUNNING — Gmail Automation</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Bebas+Neue&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { min-height: 100vh; background: #0a0a0a; color: #e8e8e0; font-family: 'DM Mono', 'Courier New', monospace; }
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: #111; }
+  ::-webkit-scrollbar-thumb { background: #2a2a2a; border-radius: 2px; }
+  .header { background: #0c0c0c; border-bottom: 1px solid #161616; padding: 18px 32px; display: flex; align-items: center; justify-content: space-between; }
+  .header-brand { font-family: 'Bebas Neue', sans-serif; font-size: 26px; letter-spacing: 4px; color: #00e676; }
+  .header-sub { font-size: 10px; color: #2e2e2e; letter-spacing: 2px; text-transform: uppercase; margin-top: -2px; }
+  .status-dot { width: 7px; height: 7px; border-radius: 50%; background: #00e676; box-shadow: 0 0 8px rgba(0,230,118,0.5); display: inline-block; margin-right: 8px; }
+  .status-text { font-size: 10px; color: #2e2e2e; letter-spacing: 1px; text-transform: uppercase; }
+  .api-banner { background: #0f0f0f; border-bottom: 1px solid #1a1a1a; padding: 12px 32px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .api-banner input { background: #080808; border: 1px solid #1c1c1c; color: #ddd; border-radius: 4px; padding: 7px 12px; font-family: 'DM Mono', monospace; font-size: 11px; width: 320px; letter-spacing: 1px; }
+  .api-banner input:focus { outline: none; border-color: #2e2e2e; }
+  .api-banner label { font-size: 10px; color: #3a3a3a; letter-spacing: 1px; text-transform: uppercase; white-space: nowrap; }
+  .api-saved { font-size: 10px; color: #00e676; letter-spacing: 1px; }
+  .tabs { background: #0c0c0c; border-bottom: 1px solid #161616; padding: 0 32px; display: flex; }
+  .tab-btn { background: none; border: none; border-bottom: 2px solid transparent; cursor: pointer; font-family: 'Bebas Neue', sans-serif; font-size: 17px; letter-spacing: 2px; padding: 13px 22px; transition: all 0.2s; color: #3a3a3a; }
+  .tab-btn:hover { color: #777; }
+  .tab-btn.active { color: #00e676; border-bottom-color: #00e676; }
+  .badge { display: inline-flex; align-items: center; justify-content: center; background: #ff5252; color: #fff; font-size: 10px; font-weight: 700; width: 17px; height: 17px; border-radius: 50%; margin-left: 6px; vertical-align: middle; line-height: 1; font-family: 'DM Mono', monospace; }
+  .content { padding: 28px 32px; max-width: 900px; }
+  .section-title { font-family: 'Bebas Neue', sans-serif; font-size: 22px; letter-spacing: 3px; }
+  .section-sub { font-size: 11px; color: #3a3a3a; margin-top: 4px; }
+  .btn { border: none; cursor: pointer; font-family: 'DM Mono', monospace; font-size: 11px; font-weight: 500; letter-spacing: 1px; padding: 7px 14px; border-radius: 3px; transition: all 0.15s; text-transform: uppercase; }
+  .btn:disabled { opacity: 0.35; cursor: not-allowed; }
+  .btn-primary { background: #00e676; color: #000; font-weight: 600; }
+  .btn-primary:hover:not(:disabled) { background: #00ff88; }
+  .btn-green { background: rgba(0,230,118,0.1); color: #00e676; border: 1px solid rgba(0,230,118,0.2); }
+  .btn-green:hover:not(:disabled) { background: rgba(0,230,118,0.2); }
+  .btn-yellow { background: rgba(255,171,0,0.08); color: #ffab00; border: 1px solid rgba(255,171,0,0.18); }
+  .btn-yellow:hover { background: rgba(255,171,0,0.15); }
+  .btn-red { background: rgba(255,82,82,0.08); color: #ff5252; border: 1px solid rgba(255,82,82,0.18); }
+  .btn-red:hover { background: rgba(255,82,82,0.15); }
+  .btn-ghost { background: transparent; color: #444; border: 1px solid #1e1e1e; }
+  .btn-ghost:hover { color: #888; border-color: #333; }
+  .btn-lbl { background: transparent; color: #3a3a3a; border: 1px solid #1e1e1e; font-size: 10px; padding: 5px 10px; cursor: pointer; font-family: 'DM Mono', monospace; letter-spacing: 1px; text-transform: uppercase; border-radius: 3px; transition: all 0.15s; }
+  .btn-lbl:hover:not(:disabled) { color: #aaa; border-color: #333; }
+  .btn-lbl:disabled { opacity: 0.35; cursor: not-allowed; }
+  .card { background: #0f0f0f; border: 1px solid #1a1a1a; border-radius: 6px; padding: 16px; margin-bottom: 10px; transition: border-color 0.15s; }
+  .card:hover { border-color: #252525; }
+  .card.dimmed { opacity: 0.38; }
+  .card.clickable { cursor: pointer; }
+  .pill { display: inline-block; font-size: 10px; letter-spacing: 1px; padding: 3px 9px; border-radius: 20px; font-weight: 600; text-transform: uppercase; }
+  .kw-tag { background: #0d0d0d; border: 1px solid #1a1a1a; color: #2e2e2e; font-size: 10px; padding: 2px 7px; border-radius: 2px; display: inline-block; margin: 2px; }
+  .email-subject { font-size: 13px; font-weight: 500; margin-bottom: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .email-from { font-size: 11px; color: #3a3a3a; }
+  .email-snippet { font-size: 11px; color: #2e2e2e; margin-bottom: 12px; line-height: 1.65; }
+  .card-row { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
+  .card-tags { display: flex; gap: 7px; align-items: center; margin-left: 16px; flex-shrink: 0; flex-wrap: wrap; justify-content: flex-end; }
+  .card-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 4px; }
+  .preview-box { background: #080808; border: 1px solid #161616; border-radius: 4px; padding: 14px; margin-bottom: 12px; }
+  .preview-subject { font-size: 10px; color: #2a2a2a; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 8px; }
+  .preview-body { font-size: 11px; color: #4a4a4a; white-space: pre-wrap; font-family: 'DM Mono', monospace; line-height: 1.75; }
+  .log-row { font-size: 11px; padding: 5px 0; border-bottom: 1px solid #111; display: flex; gap: 14px; }
+  .log-time { color: #222; min-width: 72px; flex-shrink: 0; }
+  .empty { text-align: center; padding: 80px 0; }
+  .empty-title { font-family: 'Bebas Neue', sans-serif; font-size: 56px; letter-spacing: 6px; color: #1c1c1c; }
+  .empty-sub { font-size: 11px; color: #2a2a2a; margin-top: 8px; }
+  .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 100; display: flex; align-items: center; justify-content: center; padding: 20px; }
+  .modal-overlay.hidden { display: none !important; }
+  .modal { background: #0f0f0f; border: 1px solid #222; border-radius: 8px; width: 100%; max-width: 680px; max-height: 88vh; overflow-y: auto; padding: 28px; }
+  .modal-sm { background: #0f0f0f; border: 1px solid #222; border-radius: 8px; width: 100%; max-width: 420px; padding: 22px; }
+  .modal-title { font-family: 'Bebas Neue', sans-serif; font-size: 20px; letter-spacing: 3px; margin-bottom: 20px; }
+  .field { margin-bottom: 14px; }
+  .field-label { font-size: 10px; color: #3a3a3a; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 7px; }
+  .field input, .field textarea { background: #080808; border: 1px solid #1c1c1c; color: #ddd; border-radius: 4px; padding: 9px 12px; font-family: 'DM Mono', monospace; font-size: 12px; width: 100%; }
+  .field textarea { line-height: 1.75; resize: vertical; padding: 12px; }
+  .field input:focus, .field textarea:focus { outline: none; border-color: #2e2e2e; }
+  .modal-footer { display: flex; gap: 10px; justify-content: flex-end; margin-top: 8px; }
+  .label-option { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: 4px; cursor: pointer; transition: background 0.12s; margin-bottom: 4px; border: 1px solid transparent; }
+  .label-option:hover { background: #181818; border-color: #222; }
+  .label-option-name { font-size: 10px; color: #2e2e2e; }
+  .flex-between { display: flex; justify-content: space-between; align-items: center; }
+  .flex { display: flex; }
+  .gap8 { gap: 8px; }
+  .mb22 { margin-bottom: 22px; }
+  .mb8 { margin-bottom: 8px; }
+  .hidden { display: none !important; }
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.35} }
+  .pulse { animation: pulse 1.6s ease-in-out infinite; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <div class="header-brand">FR3RUNNING</div>
+    <div class="header-sub">Gmail Automation — Review Queue + Labels</div>
+  </div>
+  <div class="flex" style="align-items:center">
+    <span class="status-dot"></span>
+    <span class="status-text">Gmail via Anthropic API</span>
+  </div>
+</div>
+
+<div class="api-banner">
+  <label for="apiKeyInput">Anthropic API Key:</label>
+  <input type="password" id="apiKeyInput" placeholder="sk-ant-api03-...">
+  <button class="btn btn-primary" onclick="saveApiKey()">Save</button>
+  <span id="apiSavedMsg" class="api-saved hidden">Saved for this session</span>
+  <span style="font-size:10px;color:#2a2a2a">Session only — never stored</span>
+</div>
+
+<div class="tabs">
+  <button class="tab-btn active" data-tab="scanner" onclick="switchTab('scanner')">Inbox Scanner</button>
+  <button class="tab-btn" data-tab="queue" onclick="switchTab('queue')">Review Queue <span id="queueBadge" class="badge hidden">0</span></button>
+  <button class="tab-btn" data-tab="templates" onclick="switchTab('templates')">Templates</button>
+  <button class="tab-btn" data-tab="log" onclick="switchTab('log')">Activity Log</button>
+</div>
+
+<div class="content">
+  <div id="tab-scanner" class="tab-panel active">
+    <div class="flex-between mb22">
+      <div><div class="section-title">INBOX SCANNER</div><div class="section-sub" id="scanStatus">Enter API key above, then scan inbox</div></div>
+      <div class="flex gap8">
+        <button class="btn btn-yellow hidden" id="stageAllBtn" onclick="stageAll()">Stage All Matched</button>
+        <button class="btn btn-primary" id="scanBtn" onclick="scanEmails()">Scan Inbox</button>
+      </div>
+    </div>
+    <div id="emailList"><div class="empty"><div class="empty-title">READY</div><div class="empty-sub">Enter your Anthropic API key, then click Scan Inbox</div></div></div>
+  </div>
+
+  <div id="tab-queue" class="tab-panel">
+    <div class="flex-between mb22">
+      <div><div class="section-title">REVIEW QUEUE</div><div class="section-sub" id="queueStatus">No replies staged yet</div></div>
+      <button class="btn btn-primary hidden" id="sendAllBtn" onclick="sendAll()">Send All (0)</button>
+    </div>
+    <div id="queueList"><div class="empty"><div class="empty-title">EMPTY</div><div class="empty-sub">Scan inbox and stage replies to see them here</div></div></div>
+  </div>
+
+  <div id="tab-templates" class="tab-panel">
+    <div class="mb22"><div class="section-title">REPLY TEMPLATES</div><div class="section-sub">Click any template to edit body, subject, keywords, or Gmail label.</div></div>
+    <div id="templateList"></div>
+  </div>
+
+  <div id="tab-log" class="tab-panel">
+    <div class="mb22"><div class="section-title">ACTIVITY LOG</div><div class="section-sub" id="logCount">0 events this session</div></div>
+    <div id="logList"><div style="color:#1e1e1e;font-size:12px;padding:60px 0;text-align:center">No activity yet.</div></div>
+  </div>
+</div>
+
+<!-- LABEL PICKER -->
+<div class="modal-overlay hidden" id="labelPickerOverlay" onclick="closeLabelPicker()">
+  <div class="modal-sm" onclick="event.stopPropagation()">
+    <div class="modal-title">APPLY LABEL</div>
+    <div id="labelPickerFrom" style="font-size:11px;color:#3a3a3a;margin-bottom:18px"></div>
+    <div id="labelPickerOptions"></div>
+    <div style="margin-top:16px;text-align:right"><button class="btn btn-ghost" onclick="closeLabelPicker()">Cancel</button></div>
+  </div>
+</div>
+
+<!-- EDIT QUEUE ITEM -->
+<div class="modal-overlay hidden" id="editQueueOverlay" onclick="closeQueueEdit()">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-title" id="editQueueTitle">EDIT REPLY</div>
+    <div class="field"><div class="field-label">Subject</div><input type="text" id="editQSubject"></div>
+    <div class="field"><div class="field-label">Gmail Label</div><input type="text" id="editQLabel"></div>
+    <div class="field" style="margin-bottom:22px"><div class="field-label">Body</div><textarea id="editQBody" rows="14"></textarea></div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeQueueEdit()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveQueueEdit()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- EDIT TEMPLATE -->
+<div class="modal-overlay hidden" id="editTemplateOverlay" onclick="closeTemplateEdit()">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-title" id="editTemplateTitle">EDIT TEMPLATE</div>
+    <div class="field"><div class="field-label">Subject Line</div><input type="text" id="editTSubject"></div>
+    <div class="field"><div class="field-label">Gmail Label Name</div><input type="text" id="editTGmailLabel"></div>
+    <div class="field"><div class="field-label">Reply Body</div><textarea id="editTBody" rows="12"></textarea></div>
+    <div class="field" style="margin-bottom:22px"><div class="field-label">Trigger Keywords (comma separated)</div><input type="text" id="editTKeywords"></div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeTemplateEdit()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveTemplateEdit()">Save Template</button>
+    </div>
+  </div>
+</div>
+
+<script>
+var API_KEY = '';
+var emails = [];
+var queue = [];
+var actionLog = [];
+var labelPickerTarget = null;
+var editingQueueQid = null;
+var editingTemplateId = null;
+var sendingSet = {};
+var labelingSet = {};
+
+var LABEL_COLORS = {
+  birthday:   { bg: 'rgba(255,100,130,0.13)', color: '#ff6482' },
+  scheduling: { bg: 'rgba(100,180,255,0.13)', color: '#64b4ff' },
+  pricing:    { bg: 'rgba(180,130,255,0.13)', color: '#b482ff' },
+  camps:      { bg: 'rgba(255,200,60,0.13)',  color: '#ffc83c' },
+  makeup:     { bg: 'rgba(255,140,60,0.13)',  color: '#ff8c3c' },
+  tokens:     { bg: 'rgba(60,220,180,0.13)',  color: '#3cdcb4' },
+  freetrial:  { bg: 'rgba(0,230,118,0.13)',   color: '#00e676' },
+  dropin:     { bg: 'rgba(255,220,80,0.13)',  color: '#ffdc50' },
+  general:    { bg: 'rgba(160,160,160,0.13)', color: '#aaaaaa' }
+};
+
+var TEMPLATES = [
+  { id:'birthday', label:'Birthday Party', gmailLabel:'FR3/Birthday-Party',
+    keywords:['birthday','party','celebrate','book a party','party package','birthday event'],
+    subject:'Re: Birthday Party at FR3RUNNING Society',
+    body:'Hi [Name],\n\nThanks for reaching out about hosting a birthday party at FR3RUNNING Society!\n\nBirthday Party Packages:\n- 90-min private session with a dedicated coach\n- Includes open gym + structured parkour activities\n- Up to 15 kids per session\n- Available at both Culver City & Glendale locations\n\nTo book, reply with your preferred date, time, and location and we\'ll check availability.\n\nCan\'t wait to make it an epic day!\n\n\u2013 The FR3RUNNING Team\nfollow your flow' },
+  { id:'scheduling', label:'Class Scheduling', gmailLabel:'FR3/Class-Scheduling',
+    keywords:['schedule','class times','when are classes','what time','class schedule','weekly schedule'],
+    subject:'Re: FR3RUNNING Class Schedule',
+    body:'Hi [Name],\n\nThanks for asking about our class schedule!\n\nOur group classes run throughout the week for different age groups and skill levels. You can view the full up-to-date schedule and book directly through our portal at iClassPro.\n\nTo get started:\n1. Visit our website and click "Enroll"\n2. Select your location (Culver City or Glendale)\n3. Choose the class that fits your schedule\n\nQuestions? Just reply here and we\'ll help you find the right fit.\n\n\u2013 The FR3RUNNING Team\nfollow your flow' },
+  { id:'pricing', label:'Pricing & Enrollment', gmailLabel:'FR3/Pricing-Enrollment',
+    keywords:['price','cost','how much','pricing','enroll','enrollment','tuition','monthly','membership','fee'],
+    subject:'Re: FR3RUNNING Pricing & Enrollment',
+    body:'Hi [Name],\n\nGreat to hear from you! Here\'s a breakdown of what we offer:\n\nPricing Overview:\n- Monthly group classes \u2014 tiered by age/level\n- Drop-ins available for select sessions\n- Free trial class for new students\n\nEnrollment is handled through our online portal \u2014 quick and easy to get started.\n\nWant us to point you to the right program? Let us know your child\'s age and experience level and we\'ll make a recommendation.\n\n\u2013 The FR3RUNNING Team\nfollow your flow' },
+  { id:'camps', label:'Camps', gmailLabel:'FR3/Camps',
+    keywords:['camp','summer camp','holiday camp','day camp','school break','winter camp','spring camp'],
+    subject:'Re: FR3RUNNING Camps',
+    body:'Hi [Name],\n\nThanks for your interest in our camps!\n\nFR3RUNNING Camps:\n- Half-day: 9am - 1pm\n- Full-day: 9am - 3pm\n- Structured parkour training + free movement time\n- Available during school breaks (summer, winter, spring)\n- Both Culver City & Glendale locations\n\nSpots fill fast, so we recommend registering early. Reply with the dates you\'re looking at and we\'ll confirm availability.\n\n\u2013 The FR3RUNNING Team\nfollow your flow' },
+  { id:'makeup', label:'Makeup Classes', gmailLabel:'FR3/Makeup-Class',
+    keywords:['makeup class','make up class','missed class','reschedule','make-up'],
+    subject:'Re: Makeup Class Request',
+    body:'Hi [Name],\n\nNo problem \u2014 life happens!\n\nMakeup Class Policy:\n- Makeups are token-based\n- You have 60 days to use your makeup token\n- Subject to availability in a comparable class level\n\nPlease log into your iClassPro account to schedule your makeup, or reply here with your preferred date and we\'ll assist you directly.\n\n\u2013 The FR3RUNNING Team\nfollow your flow' },
+  { id:'tokens', label:'Tokens', gmailLabel:'FR3/Tokens',
+    keywords:['token','tokens','punch card','passes','class pass','credits'],
+    subject:'Re: FR3RUNNING Tokens / Class Passes',
+    body:'Hi [Name],\n\nThanks for asking about our token system!\n\nTokens let you pay per class without a monthly commitment \u2014 great for flexible schedules.\n\nToken Pricing:\n- 5-pack: $275\n- Purchase at fr3.store\n\nTokens are valid for 60 days from purchase. Once you have yours, you can book directly through your location\'s portal.\n\n\u2013 The FR3RUNNING Team\nfollow your flow' },
+  { id:'freetrial', label:'Free Trial', gmailLabel:'FR3/Free-Trial',
+    keywords:['free trial','trial class','try a class','first class free','try out','visit','come check out'],
+    subject:'Re: Free Trial Class at FR3RUNNING',
+    body:'Hi [Name],\n\nWe\'d love to have you come try us out!\n\nFree Trial Details:\n- First class is FREE for new students\n- No commitment required\n- Available at both Culver City & Glendale\n\nHow to book:\n1. Go to your location\'s portal \u2014 Glendale: fr3.us / Culver City: fr3.me\n2. Create an account\n3. Add your student\n4. Choose a class\n5. Select the trial option\n\nSee you on the mats!\n\n\u2013 The FR3RUNNING Team\nfollow your flow' },
+  { id:'dropin', label:'Drop-In', gmailLabel:'FR3/Drop-In',
+    keywords:['drop in','drop-in','drop ins','single class','one class','visit once'],
+    subject:'Re: Drop-In Classes at FR3RUNNING',
+    body:'Hi [Name],\n\nYes, we offer drop-in classes!\n\nDrop-In Info:\n- $55 per session\n- Must be purchased before attending \u2014 no walk-ins\n- Reach out to our front desk to purchase a drop-in token\n- Once you have your token, book your spot online\n\nReply here or contact your nearest location and we\'ll get you set up.\n\n\u2013 The FR3RUNNING Team\nfollow your flow' },
+  { id:'general', label:'General Info', gmailLabel:'FR3/General-Info',
+    keywords:['info','information','tell me more','what do you offer','about your gym','parkour','learn more'],
+    subject:'Re: FR3RUNNING Society \u2013 Here\'s What You Need to Know',
+    body:'Hi [Name],\n\nThanks for reaching out to FR3RUNNING Society!\n\nWe\'re a parkour and youth movement gym with locations in Culver City and Glendale, CA. We\'ve been running since 2018 and specialize in building confidence, coordination, and community through movement.\n\nWhat we offer:\n- Group classes for all ages and skill levels\n- Private training\n- Open gym sessions\n- Birthday parties\n- Camps (seasonal)\n- Free trial for new students\n\nReady to get started or want more info? Let us know what you\'re looking for and we\'ll point you in the right direction.\n\n\u2013 The FR3RUNNING Team\nfollow your flow' }
+];
+
+function saveApiKey() {
+  API_KEY = document.getElementById('apiKeyInput').value.trim();
+  if (API_KEY) {
+    var msg = document.getElementById('apiSavedMsg');
+    msg.classList.remove('hidden');
+    setTimeout(function() { msg.classList.add('hidden'); }, 2000);
+  }
+}
+
+function switchTab(tab) {
+  document.querySelectorAll('.tab-btn').forEach(function(b) { b.classList.toggle('active', b.dataset.tab === tab); });
+  document.querySelectorAll('.tab-panel').forEach(function(p) { p.classList.toggle('active', p.id === 'tab-' + tab); });
+}
+
+function lc(id) { return LABEL_COLORS[id] || LABEL_COLORS.general; }
+
+function makePill(templateId, text) {
+  var c = lc(templateId);
+  return '<span class="pill" style="background:' + c.bg + ';color:' + c.color + ';border:1px solid ' + c.color + '22">' + text + '</span>';
+}
+
+function statusPill(status) {
+  var map = { sent: {bg:'rgba(0,230,118,0.08)',color:'#00e676',border:'rgba(0,230,118,0.15)'}, failed: {bg:'rgba(255,82,82,0.08)',color:'#ff5252',border:'rgba(255,82,82,0.15)'}, pending: {bg:'rgba(255,171,0,0.08)',color:'#ffab00',border:'rgba(255,171,0,0.15)'} };
+  var s = map[status] || map.pending;
+  return '<span class="pill" style="background:' + s.bg + ';color:' + s.color + ';border:1px solid ' + s.border + '">' + status + '</span>';
+}
+
+function matchTemplate(subject, body) {
+  var text = (subject + ' ' + body).toLowerCase();
+  var best = null, bestScore = 0;
+  TEMPLATES.forEach(function(t) {
+    var score = 0;
+    t.keywords.forEach(function(kw) { if (text.indexOf(kw) >= 0) score++; });
+    if (score > bestScore) { bestScore = score; best = t; }
+  });
+  return bestScore > 0 ? best : null;
+}
+
+function addLog(msg, type) {
+  type = type || 'info';
+  actionLog.unshift({ msg: msg, type: type, time: new Date().toLocaleTimeString() });
+  if (actionLog.length > 50) actionLog.pop();
+  renderLog();
+}
+
+async function callAPI(system, userMsg) {
+  if (!API_KEY) { alert('Please enter your Anthropic API key first.'); throw new Error('No API key'); }
+  var res = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'x-api-key': API_KEY, 'anthropic-version': '2023-06-01', 'anthropic-beta': 'mcp-client-2025-04-04' },
+    body: JSON.stringify({
+      model: 'claude-sonnet-4-20250514', max_tokens: 1000, system: system,
+      messages: [{ role: 'user', content: userMsg }],
+      mcp_servers: [{ type: 'url', url: 'https://gmail.mcp.claude.com/mcp', name: 'gmail-mcp' }]
+    })
+  });
+  return res.json();
+}
+
+async function scanEmails() {
+  var btn = document.getElementById('scanBtn');
+  btn.disabled = true; btn.innerHTML = '<span class="pulse">Scanning...</span>';
+  document.getElementById('scanStatus').textContent = 'Connecting to Gmail...';
+  emails = []; renderEmails();
+  try {
+    var data = await callAPI('You are a Gmail assistant. Using Gmail MCP, fetch the 10 most recent UNREAD emails. Return ONLY a JSON array (no markdown) with: id, from, subject, snippet (200 chars), date. If none return [].', 'Fetch my 10 most recent unread Gmail messages.');
+    var raw = '';
+    (data.content || []).forEach(function(b) { if (b.type === 'mcp_tool_result') raw = (b.content||[{text:''}])[0].text || ''; else if (b.type === 'text') raw = b.text; });
+    var clean = raw.replace(/```json|```/g, '').trim();
+    var parsed = [];
+    try { parsed = JSON.parse(clean); } catch(e) {}
+    emails = parsed.map(function(e) { return Object.assign({}, e, { matched: matchTemplate(e.subject||'', e.snippet||''), queued: false, appliedLabel: null }); });
+    document.getElementById('scanStatus').textContent = 'Found ' + emails.length + ' unread email(s)';
+    addLog('Inbox scanned — ' + emails.length + ' unread emails', 'success');
+  } catch(err) {
+    document.getElementById('scanStatus').textContent = 'Error connecting to Gmail';
+    addLog('Scan failed: ' + err.message, 'error');
+  }
+  btn.disabled = false; btn.textContent = 'Scan Inbox';
+  renderEmails();
+}
+
+function stageReply(emailId) {
+  var email = emails.find(function(e) { return e.id === emailId; });
+  if (!email || !email.matched) return;
+  var tmpl = email.matched;
+  var body = tmpl.body.replace(/\[Name\]/g, (email.from || '').split(' ')[0] || 'there');
+  queue.push({ qid: emailId + '-' + Date.now(), emailId: emailId, from: email.from, originalSubject: email.subject, subject: tmpl.subject, body: body, templateId: tmpl.id, templateLabel: tmpl.label, gmailLabel: tmpl.gmailLabel, stagedAt: new Date().toLocaleTimeString(), status: 'pending', labelApplied: false });
+  email.queued = true;
+  addLog('Staged reply for: ' + email.from + ' \u2014 ' + tmpl.label, 'info');
+  renderEmails(); renderQueue(); switchTab('queue');
+}
+
+function stageAll() {
+  var unstaged = emails.filter(function(e) { return e.matched && !e.queued; });
+  unstaged.forEach(function(email) {
+    var tmpl = email.matched;
+    var body = tmpl.body.replace(/\[Name\]/g, (email.from || '').split(' ')[0] || 'there');
+    queue.push({ qid: email.id + '-' + Date.now() + '-' + Math.random(), emailId: email.id, from: email.from, originalSubject: email.subject, subject: tmpl.subject, body: body, templateId: tmpl.id, templateLabel: tmpl.label, gmailLabel: tmpl.gmailLabel, stagedAt: new Date().toLocaleTimeString(), status: 'pending', labelApplied: false });
+    email.queued = true;
+  });
+  if (unstaged.length) { addLog('Staged ' + unstaged.length + ' replies', 'info'); switchTab('queue'); }
+  renderEmails(); renderQueue();
+}
+
+async function sendReply(qid) {
+  var item = queue.find(function(i) { return i.qid === qid; });
+  if (!item) return;
+  sendingSet[qid] = true; renderQueue();
+  try {
+    await callAPI('You are a Gmail assistant for FR3RUNNING Society. Do two things via Gmail MCP:\n1. Reply to email id "' + item.emailId + '" with subject "' + item.subject + '" and body:\n\n' + item.body + '\n\n2. Apply label "' + item.gmailLabel + '" (create if needed).\nConfirm both in one sentence.', 'Send the reply and apply the label now.');
+    item.status = 'sent'; item.labelApplied = true;
+    var email = emails.find(function(e) { return e.id === item.emailId; });
+    if (email) email.appliedLabel = { templateId: item.templateId, labelName: item.gmailLabel };
+    addLog('Sent + labeled "' + item.gmailLabel + '": ' + item.from, 'success');
+  } catch(err) {
+    item.status = 'failed';
+    addLog('Send failed for ' + item.from + ': ' + err.message, 'error');
+  }
+  delete sendingSet[qid];
+  renderQueue(); renderEmails();
+}
+
+async function sendAll() {
+  var pending = queue.filter(function(i) { return i.status === 'pending'; });
+  for (var i = 0; i < pending.length; i++) await sendReply(pending[i].qid);
+}
+
+function removeFromQueue(qid) {
+  var item = queue.find(function(i) { return i.qid === qid; });
+  if (item) { var email = emails.find(function(e) { return e.id === item.emailId; }); if (email) email.queued = false; }
+  queue = queue.filter(function(i) { return i.qid !== qid; });
+  renderQueue(); renderEmails();
+}
+
+function retryReply(qid) {
+  var item = queue.find(function(i) { return i.qid === qid; });
+  if (item) { item.status = 'pending'; renderQueue(); }
+}
+
+function openLabelPicker(emailId) {
+  labelPickerTarget = emailId;
+  var email = emails.find(function(e) { return e.id === emailId; });
+  document.getElementById('labelPickerFrom').textContent = email ? email.from : '';
+  document.getElementById('labelPickerOptions').innerHTML = TEMPLATES.map(function(t) {
+    var c = lc(t.id);
+    return '<div class="label-option" onclick="applyLabel(\'' + emailId + '\',\'' + t.id + '\',\'' + t.gmailLabel + '\',\'' + t.label + '\')">' +
+      '<span class="pill" style="background:' + c.bg + ';color:' + c.color + ';border:1px solid ' + c.color + '22;min-width:130px;text-align:center">' + t.label + '</span>' +
+      '<span class="label-option-name">' + t.gmailLabel + '</span></div>';
+  }).join('');
+  document.getElementById('labelPickerOverlay').classList.remove('hidden');
+}
+
+function closeLabelPicker() { document.getElementById('labelPickerOverlay').classList.add('hidden'); labelPickerTarget = null; }
+
+async function applyLabel(emailId, templateId, labelName, displayLabel) {
+  closeLabelPicker();
+  labelingSet[emailId] = true; renderEmails();
+  try {
+    await callAPI('You are a Gmail assistant. Apply label "' + labelName + '" to email id "' + emailId + '". Create label if needed. Confirm in one sentence.', 'Apply the label now.');
+    var email = emails.find(function(e) { return e.id === emailId; });
+    if (email) email.appliedLabel = { templateId: templateId, labelName: labelName };
+    addLog('Label applied: "' + labelName + '"', 'success');
+  } catch(err) { addLog('Label failed: ' + err.message, 'error'); }
+  delete labelingSet[emailId]; renderEmails();
+}
+
+function openQueueEdit(qid) {
+  editingQueueQid = qid;
+  var item = queue.find(function(i) { return i.qid === qid; });
+  document.getElementById('editQueueTitle').textContent = 'EDIT REPLY \u2014 ' + (item.from || '');
+  document.getElementById('editQSubject').value = item.subject;
+  document.getElementById('editQLabel').value = item.gmailLabel;
+  document.getElementById('editQBody').value = item.body;
+  document.getElementById('editQueueOverlay').classList.remove('hidden');
+}
+function closeQueueEdit() { document.getElementById('editQueueOverlay').classList.add('hidden'); editingQueueQid = null; }
+function saveQueueEdit() {
+  var item = queue.find(function(i) { return i.qid === editingQueueQid; });
+  if (item) { item.subject = document.getElementById('editQSubject').value; item.gmailLabel = document.getElementById('editQLabel').value; item.body = document.getElementById('editQBody').value; addLog('Reply edited for: ' + item.from, 'info'); }
+  closeQueueEdit(); renderQueue();
+}
+
+function openTemplateEdit(id) {
+  editingTemplateId = id;
+  var t = TEMPLATES.find(function(x) { return x.id === id; });
+  document.getElementById('editTemplateTitle').textContent = 'EDIT TEMPLATE \u2014 ' + t.label;
+  document.getElementById('editTSubject').value = t.subject;
+  document.getElementById('editTGmailLabel').value = t.gmailLabel;
+  document.getElementById('editTBody').value = t.body;
+  document.getElementById('editTKeywords').value = t.keywords.join(', ');
+  document.getElementById('editTemplateOverlay').classList.remove('hidden');
+}
+function closeTemplateEdit() { document.getElementById('editTemplateOverlay').classList.add('hidden'); editingTemplateId = null; }
+function saveTemplateEdit() {
+  var t = TEMPLATES.find(function(x) { return x.id === editingTemplateId; });
+  if (t) { t.subject = document.getElementById('editTSubject').value; t.gmailLabel = document.getElementById('editTGmailLabel').value; t.body = document.getElementById('editTBody').value; t.keywords = document.getElementById('editTKeywords').value.split(',').map(function(k){return k.trim();}).filter(Boolean); addLog('Template updated: ' + t.label, 'info'); }
+  closeTemplateEdit(); renderTemplates();
+}
+
+function renderEmails() {
+  var hasMatched = emails.some(function(e) { return e.matched && !e.queued; });
+  document.getElementById('stageAllBtn').classList.toggle('hidden', !hasMatched);
+  var list = document.getElementById('emailList');
+  if (!emails.length) { list.innerHTML = '<div class="empty"><div class="empty-title">READY</div><div class="empty-sub">Click "Scan Inbox" to fetch unread emails</div></div>'; return; }
+  list.innerHTML = emails.map(function(email) {
+    var c = email.matched ? lc(email.matched.id) : null;
+    var matchedPill = email.matched ? '<span class="pill" style="background:' + c.bg + ';color:' + c.color + ';border:1px solid ' + c.color + '22">' + email.matched.label + '</span>' : '<span class="pill" style="background:#131313;color:#333">No Match</span>';
+    var stagedPill = email.queued ? '<span class="pill" style="background:rgba(255,171,0,0.08);color:#cc8800;border:1px solid rgba(255,171,0,0.15)">Staged</span>' : '';
+    var labeledPill = '';
+    if (email.appliedLabel) { var lcc = lc(email.appliedLabel.templateId); labeledPill = '<span class="pill" style="background:' + lcc.bg + ';color:' + lcc.color + ';border:1px dashed ' + lcc.color + '44">Labeled</span>'; }
+    var isLabeling = !!labelingSet[email.id];
+    var stageBtn = (email.matched && !email.queued) ? '<button class="btn btn-green" onclick="stageReply(\'' + email.id + '\')">+ Stage Reply</button>' : '';
+    var labelBtn = !email.appliedLabel ? '<button class="btn-lbl" ' + (isLabeling ? 'disabled' : '') + ' onclick="openLabelPicker(\'' + email.id + '\')">' + (isLabeling ? '<span class="pulse">Labeling...</span>' : 'Label') + '</button>' : '<span style="font-size:11px;color:#2a2a2a">Gmail: ' + email.appliedLabel.labelName + '</span>';
+    var noMatch = (!email.matched && !email.appliedLabel) ? '<span style="font-size:11px;color:#2a2a2a;font-style:italic">No template matched \u2014 label manually</span>' : '';
+    return '<div class="card' + (email.queued ? ' dimmed' : '') + '"><div class="card-row"><div style="flex:1;min-width:0"><div class="email-subject">' + (email.subject || '(no subject)') + '</div><div class="email-from">' + (email.from || '') + ' \u00b7 ' + (email.date || '') + '</div></div><div class="card-tags">' + matchedPill + labeledPill + stagedPill + '</div></div><div class="email-snippet">' + (email.snippet || '') + '</div><div class="card-actions">' + stageBtn + labelBtn + noMatch + '</div></div>';
+  }).join('');
+}
+
+function renderQueue() {
+  var pending = queue.filter(function(i) { return i.status === 'pending'; });
+  var sent = queue.filter(function(i) { return i.status === 'sent'; });
+  var failed = queue.filter(function(i) { return i.status === 'failed'; });
+  var badge = document.getElementById('queueBadge');
+  badge.textContent = pending.length; badge.classList.toggle('hidden', pending.length === 0);
+  var sab = document.getElementById('sendAllBtn');
+  sab.textContent = 'Send All (' + pending.length + ')'; sab.classList.toggle('hidden', pending.length === 0);
+  document.getElementById('queueStatus').textContent = queue.length === 0 ? 'No replies staged yet' : pending.length + ' pending \u00b7 ' + sent.length + ' sent \u00b7 ' + failed.length + ' failed';
+  var list = document.getElementById('queueList');
+  if (!queue.length) { list.innerHTML = '<div class="empty"><div class="empty-title">EMPTY</div><div class="empty-sub">Scan your inbox and stage replies to see them here</div></div>'; return; }
+  list.innerHTML = queue.map(function(item) {
+    var c = lc(item.templateId);
+    var isSending = !!sendingSet[item.qid];
+    var actions = '';
+    if (item.status === 'pending') {
+      actions = '<div class="card-actions"><button class="btn btn-green" ' + (isSending ? 'disabled' : '') + ' onclick="sendReply(\'' + item.qid + '\')">' + (isSending ? '<span class="pulse">Sending...</span>' : 'Send + Label') + '</button><button class="btn btn-yellow" onclick="openQueueEdit(\'' + item.qid + '\')">Edit</button><button class="btn btn-red" onclick="removeFromQueue(\'' + item.qid + '\')">Remove</button></div>';
+    } else if (item.status === 'sent') {
+      actions = '<div style="font-size:11px;color:#00e676">Reply sent + labeled in Gmail</div>';
+    } else {
+      actions = '<div class="card-actions"><span style="font-size:11px;color:#ff5252">Send failed</span><button class="btn btn-ghost" onclick="retryReply(\'' + item.qid + '\')">Retry</button></div>';
+    }
+    return '<div class="card' + (item.status === 'sent' ? ' dimmed' : '') + '"><div class="card-row"><div><div style="font-size:13px;font-weight:500;margin-bottom:3px">' + (item.from || '') + '</div><div style="font-size:11px;color:#3a3a3a">Re: ' + (item.originalSubject || '') + '</div></div><div class="card-tags"><span class="pill" style="background:' + c.bg + ';color:' + c.color + ';border:1px solid ' + c.color + '22">' + item.templateLabel + '</span>' + statusPill(item.status) + '</div></div><div style="font-size:10px;color:#2a2a2a;margin-bottom:10px;display:flex;align-items:center;gap:6px"><span style="color:#222">Gmail label on send:</span><span class="pill" style="background:' + c.bg + ';color:' + c.color + ';border:1px solid ' + c.color + '22;font-size:10px">' + item.gmailLabel + '</span>' + (item.labelApplied ? '<span style="color:#00e676;font-size:10px">\u2713 applied</span>' : '') + '</div><div class="preview-box"><div class="preview-subject">Subject: ' + item.subject + '</div><div class="preview-body">' + item.body + '</div></div><div style="font-size:10px;color:#222;margin-bottom:12px">Staged at ' + item.stagedAt + '</div>' + actions + '</div>';
+  }).join('');
+}
+
+function renderTemplates() {
+  document.getElementById('templateList').innerHTML = TEMPLATES.map(function(t) {
+    var c = lc(t.id);
+    var kws = t.keywords.map(function(k) { return '<span class="kw-tag">' + k + '</span>'; }).join('');
+    return '<div class="card clickable" onclick="openTemplateEdit(\'' + t.id + '\')"><div class="flex-between mb8"><div style="font-family:\'Bebas Neue\',sans-serif;font-size:15px;letter-spacing:2px">' + t.label + '</div><span class="pill" style="background:' + c.bg + ';color:' + c.color + ';border:1px solid ' + c.color + '22">' + t.gmailLabel + '</span></div><div style="font-size:11px;color:#3a3a3a;margin-bottom:10px">' + t.subject + '</div><div style="display:flex;flex-wrap:wrap;gap:4px">' + kws + '</div></div>';
+  }).join('');
+}
+
+function renderLog() {
+  document.getElementById('logCount').textContent = actionLog.length + ' events this session';
+  var colorMap = { success: '#00e676', error: '#ff5252', warn: '#ffab00', info: '#444' };
+  var list = document.getElementById('logList');
+  if (!actionLog.length) { list.innerHTML = '<div style="color:#1e1e1e;font-size:12px;padding:60px 0;text-align:center">No activity yet.</div>'; return; }
+  list.innerHTML = actionLog.map(function(item) { return '<div class="log-row"><span class="log-time">' + item.time + '</span><span style="color:' + (colorMap[item.type] || '#444') + '">' + item.msg + '</span></div>'; }).join('');
+}
+
+renderTemplates(); renderQueue(); renderLog();
+</script>
+</body>
+</html>
